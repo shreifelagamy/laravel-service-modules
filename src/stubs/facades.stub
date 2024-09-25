@@ -1,0 +1,18 @@
+<?php
+
+namespace $FACADE_NAMESPACE$;
+
+use Illuminate\Support\Facades\Facade;
+use $REPO_NAMESPACE$\$SERVICE_NAME$Interface;
+
+/**
+ * @see \App\Services\$SERVICE_NAME$\Repositories\$SERVICE_NAME$Interface
+ * @mixin \App\Services\$SERVICE_NAME$\Repositories\$SERVICE_NAME$Interface
+ */
+class $SERVICE_NAME$ extends Facade
+{
+    protected static function getFacadeAccessor(): string
+    {
+        return $SERVICE_NAME$Interface::class;
+    }
+}

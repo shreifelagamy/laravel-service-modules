@@ -1,0 +1,8 @@
+<?php
+
+namespace $REPO_NAMESPACE$;
+
+interface $SERVICE_NAME$Interface
+{
+    // Add your methods here
+}

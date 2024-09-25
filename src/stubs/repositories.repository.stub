@@ -1,0 +1,8 @@
+<?php
+
+namespace $REPO_NAMESPACE$;
+
+class $SERVICE_NAME$Repository implements $SERVICE_NAME$Interface
+{
+    // Add your methods here
+}

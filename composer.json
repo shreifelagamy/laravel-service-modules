@@ -1,0 +1,36 @@
+{
+    "name": "shreifelagamy/laravel-services",
+    "description": "Generate Service Module",
+    "type": "library",
+    "require": {
+        "laravel/framework": "^11"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.2"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "ShreifElagamy\\LaravelServices\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ShreifElagamy\\LaravelServices\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ShreifElagamy\\LaravelServices\\Providers\\LaravelServicesProvider"
+            ]
+        }
+    },
+    "authors": [
+        {
+            "name": "Shreif Ashraf",
+            "email": "shre.if.ashr.af@hotmail.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
