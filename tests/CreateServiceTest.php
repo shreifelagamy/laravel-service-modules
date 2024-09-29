@@ -6,31 +6,21 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Concerns\WithWorkbench;
 use PHPUnit\Framework\Attributes\Test;
+use ShreifElagamy\LaravelServices\Commands\GenerateServiceCommand;
 use ShreifElagamy\LaravelServices\Tests\TestCase;
 
 class CreateServiceTest extends TestCase
 {
     use WithWorkbench;
 
-    // protected function setUp(): void
-    // {
-    //     parent::setUp();
-    //     // Additional setup if needed
-    // }
-
-    // protected function tearDown(): void
-    // {
-    //     // Clean up generated files after each test
-    //     File::deleteDirectory(app_path('Services'));
-    //     parent::tearDown();
-    // }
-
     #[Test]
     public function it_can_generate_service_files()
     {
         $serviceName = 'TestService';
 
-        Artisan::call('make:service', ['name' => $serviceName]);
+        $this->artisan(GenerateServiceCommand::class)
+            ->expectsQuestion('Enter the service name', $serviceName)
+            ->assertExitCode(0);
 
         $this->assertFileExists(app_path("Services/{$serviceName}/Providers/{$serviceName}Provider.php"));
         $this->assertFileExists(app_path("Services/{$serviceName}/Repositories/{$serviceName}Interface.php"));
@@ -43,7 +33,9 @@ class CreateServiceTest extends TestCase
     {
         $serviceName = 'TestService';
 
-        Artisan::call('make:service', ['name' => $serviceName]);
+        $this->artisan(GenerateServiceCommand::class)
+            ->expectsQuestion('Enter the service name', $serviceName)
+            ->assertExitCode(0);
 
         $providerContent = File::get(app_path("Services/{$serviceName}/Providers/{$serviceName}Provider.php"));
         $interfaceContent = File::get(app_path("Services/{$serviceName}/Repositories/{$serviceName}Interface.php"));
@@ -63,7 +55,7 @@ class CreateServiceTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        Artisan::call('make:service', ['name' => '123InvalidName']);
+        Artisan::call(GenerateServiceCommand::class, ['name' => '123InvalidName']);
     }
 }
 

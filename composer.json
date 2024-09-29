@@ -22,7 +22,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "ShreifElagamy\\LaravelServices\\Providers\\LaravelServicesProvider"
+                "\\ShreifElagamy\\LaravelServices\\Providers\\LaravelServicesProvider"
             ]
         }
     },

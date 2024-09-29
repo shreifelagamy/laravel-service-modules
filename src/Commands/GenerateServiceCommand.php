@@ -1,15 +1,21 @@
 <?php
 
-namespace Shreifelagamy\LaravelServices\Commands;
+namespace ShreifElagamy\LaravelServices\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
-use Symfony\Component\Console\Helper\ProgressBar;
+use Laravel\Prompts\Progress;
 use Symfony\Component\Finder\SplFileInfo;
+
+use function Laravel\Prompts\note;
+use function Laravel\Prompts\progress;
+use function Laravel\Prompts\text;
 
 class GenerateServiceCommand extends Command
 {
     private Filesystem $filesystem;
+
+    private Progress $progress;
 
     private string $service_name;
 
@@ -18,17 +24,16 @@ class GenerateServiceCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'make:service';
+    protected $signature = 'service:generate';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Generate a new service';
 
-
-    function __construct(Filesystem $filesystem)
+    public function __construct(Filesystem $filesystem)
     {
         parent::__construct();
 
@@ -40,27 +45,31 @@ class GenerateServiceCommand extends Command
      */
     public function handle()
     {
-        $this->service_name = $this->ask('What is the name of the service?');
+        $this->service_name = text(
+            label: 'Enter the service name',
+            placeholder: 'ExampleService',
+            required: true,
+            validate: fn(string $value) => match (true) {
+                empty($value) => 'Service name is required',
+                $this->filesystem->exists($this->getServicesPath() . '/' . $value) => 'Service already exists',
+                default => null,
+            }
+        );
 
         $this->prepareTheServiceName();
 
-        // Check if the service already exists
-        if ($this->filesystem->exists($this->getServicesPath() . '/' . $this->service_name)) {
-            $this->output->error("Service {$this->service_name} already exists");
-            return;
-        }
-
+        // calculating steps count
+        $count = count($this->getStubFiles()) + 1;
+        $this->progress = progress(label: "Generating Service `{$this->service_name}`", steps: $count);
         $this->createSerivceDirectoryStructure();
-
         $this->generateServiceFiles();
+
+        note("Service `{$this->service_name}` generated successfully", 'warning');
     }
 
     /**
      **
      * Map the stub variables present in stub to its value
-     *
-     * @return array
-     *
      */
     public function getStubVariables(): array
     {
@@ -84,9 +93,14 @@ class GenerateServiceCommand extends Command
 
     private function generateServiceFiles(): void
     {
-        foreach ($this->getStubFiles() as $file) {
+        $files = $this->getStubFiles();
+
+        foreach ($files as $file) {
             $this->generateServiceFile($file);
+            $this->progress->advance();
         }
+
+        $this->progress->finish();
     }
 
     private function generateServiceFile(SplFileInfo $file): void
@@ -100,7 +114,6 @@ class GenerateServiceCommand extends Command
 
         $file_path = $this->guessFilePath($file);
         $this->filesystem->put($this->getServicesPath() . "/{$this->service_name}/" . $file_path, $content);
-        $this->output->success("{$file_path} created successfully");
     }
 
     private function guessFilePath(SplFileInfo $file): string
@@ -119,7 +132,6 @@ class GenerateServiceCommand extends Command
     }
 
     /**
-     *
      * @return \Symfony\Component\Finder\SplFileInfo[]
      */
     private function getStubFiles(): array
@@ -134,8 +146,11 @@ class GenerateServiceCommand extends Command
 
     private function createSerivceDirectoryStructure(): void
     {
+        $this->progress->bgGreen('Creating Service Directory Structure');
         $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Repositories', 0755, true);
         $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Facades', 0755, true);
         $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Providers', 0755, true);
+
+        $this->progress->advance();
     }
 }

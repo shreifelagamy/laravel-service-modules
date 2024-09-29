@@ -1,9 +1,9 @@
 <?php
 
-namespace Shreifelagamy\LaravelServices\Providers;
+namespace ShreifElagamy\LaravelServices\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Shreifelagamy\LaravelServices\Commands\GenerateServiceCommand;
+use ShreifElagamy\LaravelServices\Commands\GenerateServiceCommand;
 
 class LaravelServicesProvider extends ServiceProvider
 {
