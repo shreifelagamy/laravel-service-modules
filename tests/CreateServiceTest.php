@@ -47,7 +47,7 @@ class CreateServiceTest extends TestCase
         $this->assertStringContainsString("class {$serviceName}Repository implements {$serviceName}Interface", $repositoryContent);
         $this->assertStringContainsString("class {$serviceName} extends Facade", $facadeContent);
         $this->assertStringContainsString("protected static function getFacadeAccessor()", $facadeContent);
-        $this->assertStringContainsString("return '{$serviceName}';", $facadeContent);
+        $this->assertStringContainsString("return {$serviceName}Interface::class;", $facadeContent);
     }
 
     #[Test]
