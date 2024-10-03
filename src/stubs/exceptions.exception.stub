@@ -1,0 +1,13 @@
+<?php
+
+namespace $EXCEPTION_NAMESPACE$;
+
+use Exception;
+
+/**
+ * Exception class for the $SERVICE_NAME$ service.
+ */
+class $SERVICE_NAME$Exception extends Exception
+{
+    //
+}

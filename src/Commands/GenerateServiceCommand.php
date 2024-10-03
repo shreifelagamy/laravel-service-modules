@@ -7,6 +7,7 @@ use Illuminate\Filesystem\Filesystem;
 use Laravel\Prompts\Progress;
 use Symfony\Component\Finder\SplFileInfo;
 
+use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\note;
 use function Laravel\Prompts\progress;
 use function Laravel\Prompts\text;
@@ -17,14 +18,14 @@ class GenerateServiceCommand extends Command
 
     private Progress $progress;
 
-    private string $service_name;
+    private string|null $service_name;
 
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'service:generate';
+    protected $signature = 'service:generate {name?}';
 
     /**
      * The console command description.
@@ -45,24 +46,38 @@ class GenerateServiceCommand extends Command
      */
     public function handle()
     {
-        $this->service_name = text(
-            label: 'Enter the service name',
-            placeholder: 'ExampleService',
-            required: true,
-            validate: fn(string $value) => match (true) {
-                empty($value) => 'Service name is required',
-                $this->filesystem->exists($this->getServicesPath() . '/' . $value) => 'Service already exists',
-                default => null,
+        $this->service_name = $this->argument('name');
+
+        if (empty($this->service_name)) {
+            $this->service_name = text(
+                label: 'Enter the service name',
+                placeholder: 'ExampleService',
+                required: true,
+                validate: fn(string $value) => match (true) {
+                    empty($value) => 'Service name is required',
+                    $this->filesystem->exists($this->getServicesPath() . '/' . $value) => 'Service already exists',
+                    default => null,
+                }
+            );
+        } else {
+            if ($this->filesystem->exists($this->getServicesPath() . '/' . $this->service_name)) {
+                $this->error("Service '{$this->service_name}' already exists.");
+                return;
             }
-        );
+        }
 
         $this->prepareTheServiceName();
 
+        $include_exceptions = confirm(
+            label: 'Do you want to include exceptions in the service?',
+            default: true
+        );
+
         // calculating steps count
-        $count = count($this->getStubFiles()) + 1;
+        $count = count($this->getStubFiles($include_exceptions)) + 1;
         $this->progress = progress(label: "Generating Service `{$this->service_name}`", steps: $count);
-        $this->createSerivceDirectoryStructure();
-        $this->generateServiceFiles();
+        $this->createSerivceDirectoryStructure($include_exceptions);
+        $this->generateServiceFiles($include_exceptions);
 
         note("Service `{$this->service_name}` generated successfully", 'warning');
     }
@@ -77,6 +92,7 @@ class GenerateServiceCommand extends Command
             '$REPO_NAMESPACE$' => "App\\Services\\{$this->service_name}\\Repositories",
             '$PROVIDER_NAMESPACE$' => "App\\Services\\{$this->service_name}\\Providers",
             '$FACADE_NAMESPACE$' => "App\\Services\\{$this->service_name}\\Facades",
+            '$EXCEPTION_NAMESPACE$' => "App\\Services\\{$this->service_name}\\Exceptions",
             '$SERVICE_NAME$' => $this->service_name,
         ];
     }
@@ -91,9 +107,9 @@ class GenerateServiceCommand extends Command
         return app_path('Services');
     }
 
-    private function generateServiceFiles(): void
+    private function generateServiceFiles(bool $include_exceptions): void
     {
-        $files = $this->getStubFiles();
+        $files = $this->getStubFiles($include_exceptions);
 
         foreach ($files as $file) {
             $this->generateServiceFile($file);
@@ -134,9 +150,15 @@ class GenerateServiceCommand extends Command
     /**
      * @return \Symfony\Component\Finder\SplFileInfo[]
      */
-    private function getStubFiles(): array
+    private function getStubFiles(bool $include_exceptions): array
     {
-        return $this->filesystem->files($this->getStubPath());
+        $files = collect($this->filesystem->files($this->getStubPath()));
+
+        if (!$include_exceptions) {
+            $files = $files->filter(fn (SplFileInfo $file) => !str_contains($file->getFilename(), 'exception'));
+        }
+
+        return $files->toArray();
     }
 
     private function prepareTheServiceName(): void
@@ -144,12 +166,16 @@ class GenerateServiceCommand extends Command
         $this->service_name = str($this->service_name)->trim()->studly();
     }
 
-    private function createSerivceDirectoryStructure(): void
+    private function createSerivceDirectoryStructure(bool $include_exceptions): void
     {
         $this->progress->bgGreen('Creating Service Directory Structure');
         $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Repositories', 0755, true);
         $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Facades', 0755, true);
         $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Providers', 0755, true);
+
+        if ($include_exceptions) {
+            $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Exceptions', 0755, true);
+        }
 
         $this->progress->advance();
     }
