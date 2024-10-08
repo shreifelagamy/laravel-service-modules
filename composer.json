@@ -1,6 +1,6 @@
 {
-    "name": "shreifelagamy/laravel-services",
-    "description": "Generate Service Module",
+    "name": "shreifelagamy/laravel-service-modules",
+    "description": "Generate modular service architecture for Laravel applications",
     "type": "library",
     "require": {
         "laravel/framework": "^10.0|^11.0"
@@ -11,25 +11,26 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "ShreifElagamy\\LaravelServices\\": "src/"
+            "ShreifElagamy\\LaravelServiceModules\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "ShreifElagamy\\LaravelServices\\Tests\\": "tests/"
+            "ShreifElagamy\\LaravelServiceModules\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "\\ShreifElagamy\\LaravelServices\\Providers\\LaravelServicesProvider"
+                "\\ShreifElagamy\\LaravelServiceModules\\Providers\\LaravelServiceModulesProvider"
             ]
         }
     },
     "authors": [
         {
             "name": "Shreif Ashraf",
-            "email": "shre.if.ashr.af@hotmail.com"
+            "email": "theshreif@gmail.com",
+            "homepage": "https://theshreif.dev"
         }
     ],
     "scripts": {

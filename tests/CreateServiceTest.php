@@ -1,10 +1,11 @@
 <?php
 
-namespace ShreifElagamy\LaravelServices\Tests;
+namespace ShreifElagamy\LaravelServiceModules\Tests;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Config;
 use PHPUnit\Framework\Attributes\Test;
-use ShreifElagamy\LaravelServices\Commands\GenerateServiceCommand;
+use ShreifElagamy\LaravelServiceModules\Commands\GenerateServiceCommand;
 
 class CreateServiceTest extends TestCase
 {
@@ -132,5 +133,23 @@ class CreateServiceTest extends TestCase
 
         $exceptionContent = File::get(app_path("Services/{$serviceName}/Exceptions/{$serviceName}Exception.php"));
         $this->assertStringContainsString("class {$serviceName}Exception extends Exception", $exceptionContent);
+    }
+
+    #[Test]
+    public function it_can_generate_service_files_with_custom_directory()
+    {
+        $serviceName = 'CustomDirectoryService';
+        Config::set('laravel-services.directory', 'CustomServices');
+
+        $this->artisan(GenerateServiceCommand::class)
+            ->expectsQuestion('Enter the service name', $serviceName)
+            ->expectsQuestion('Do you want to include exceptions in the service?', true)
+            ->assertExitCode(0);
+
+        $this->assertFileExists(app_path("CustomServices/{$serviceName}/Providers/{$serviceName}Provider.php"));
+        $this->assertFileExists(app_path("CustomServices/{$serviceName}/Repositories/{$serviceName}Interface.php"));
+        $this->assertFileExists(app_path("CustomServices/{$serviceName}/Repositories/{$serviceName}Repository.php"));
+        $this->assertFileExists(app_path("CustomServices/{$serviceName}/Facades/{$serviceName}.php"));
+        $this->assertFileExists(app_path("CustomServices/{$serviceName}/Exceptions/{$serviceName}Exception.php"));
     }
 }

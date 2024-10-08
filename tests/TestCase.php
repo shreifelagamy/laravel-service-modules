@@ -1,6 +1,6 @@
 <?php
 
-namespace ShreifElagamy\LaravelServices\Tests;
+namespace ShreifElagamy\LaravelServiceModules\Tests;
 
 use Illuminate\Support\Facades\File;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -12,7 +12,7 @@ abstract class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
-            \ShreifElagamy\LaravelServices\Providers\LaravelServicesProvider::class,
+            \ShreifElagamy\LaravelServiceModules\Providers\LaravelServiceModulesProvider::class,
         ];
     }
 

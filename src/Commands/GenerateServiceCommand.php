@@ -1,16 +1,17 @@
 <?php
 
-namespace ShreifElagamy\LaravelServices\Commands;
+namespace ShreifElagamy\LaravelServiceModules\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Filesystem\Filesystem;
 use Laravel\Prompts\Progress;
-use Symfony\Component\Finder\SplFileInfo;
+use Illuminate\Console\Command;
+use function Laravel\Prompts\note;
+use function Laravel\Prompts\text;
 
 use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\note;
+use Illuminate\Filesystem\Filesystem;
 use function Laravel\Prompts\progress;
-use function Laravel\Prompts\text;
+use Illuminate\Support\Facades\Config;
+use Symfony\Component\Finder\SplFileInfo;
 
 class GenerateServiceCommand extends Command
 {
@@ -32,7 +33,7 @@ class GenerateServiceCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Generate a new service';
+    protected $description = 'Generate a new service module';
 
     public function __construct(Filesystem $filesystem)
     {
@@ -75,11 +76,11 @@ class GenerateServiceCommand extends Command
 
         // calculating steps count
         $count = count($this->getStubFiles($include_exceptions)) + 1;
-        $this->progress = progress(label: "Generating Service `{$this->service_name}`", steps: $count);
+        $this->progress = progress(label: "Generating Service Module `{$this->service_name}`", steps: $count);
         $this->createSerivceDirectoryStructure($include_exceptions);
         $this->generateServiceFiles($include_exceptions);
 
-        note("Service `{$this->service_name}` generated successfully", 'warning');
+        note("Service Module `{$this->service_name}` generated successfully", 'warning');
     }
 
     /**
@@ -89,10 +90,10 @@ class GenerateServiceCommand extends Command
     public function getStubVariables(): array
     {
         return [
-            '$REPO_NAMESPACE$' => "App\\Services\\{$this->service_name}\\Repositories",
-            '$PROVIDER_NAMESPACE$' => "App\\Services\\{$this->service_name}\\Providers",
-            '$FACADE_NAMESPACE$' => "App\\Services\\{$this->service_name}\\Facades",
-            '$EXCEPTION_NAMESPACE$' => "App\\Services\\{$this->service_name}\\Exceptions",
+            '$REPO_NAMESPACE$' => app()->getNamespace() . "Services\\{$this->service_name}\\Repositories",
+            '$PROVIDER_NAMESPACE$' => app()->getNamespace() . "Services\\{$this->service_name}\\Providers",
+            '$FACADE_NAMESPACE$' => app()->getNamespace() . "Services\\{$this->service_name}\\Facades",
+            '$EXCEPTION_NAMESPACE$' => app()->getNamespace() . "Services\\{$this->service_name}\\Exceptions",
             '$SERVICE_NAME$' => $this->service_name,
         ];
     }
@@ -102,9 +103,9 @@ class GenerateServiceCommand extends Command
         return __DIR__ . '/../stubs';
     }
 
-    private function getServicesPath()
+    private function getServicesPath(): string
     {
-        return app_path('Services');
+        return app_path(Config::get('laravel-service-modules.directory', 'Services'));
     }
 
     private function generateServiceFiles(bool $include_exceptions): void
@@ -155,7 +156,7 @@ class GenerateServiceCommand extends Command
         $files = collect($this->filesystem->files($this->getStubPath()));
 
         if (!$include_exceptions) {
-            $files = $files->filter(fn (SplFileInfo $file) => !str_contains($file->getFilename(), 'exception'));
+            $files = $files->filter(fn(SplFileInfo $file) => !str_contains($file->getFilename(), 'exception'));
         }
 
         return $files->toArray();
