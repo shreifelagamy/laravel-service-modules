@@ -139,7 +139,7 @@ class CreateServiceTest extends TestCase
     public function it_can_generate_service_files_with_custom_directory()
     {
         $serviceName = 'CustomDirectoryService';
-        Config::set('laravel-services.directory', 'CustomServices');
+        Config::set('laravel-service-modules.directory', 'CustomServices');
 
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
@@ -151,5 +151,30 @@ class CreateServiceTest extends TestCase
         $this->assertFileExists(app_path("CustomServices/{$serviceName}/Repositories/{$serviceName}Repository.php"));
         $this->assertFileExists(app_path("CustomServices/{$serviceName}/Facades/{$serviceName}.php"));
         $this->assertFileExists(app_path("CustomServices/{$serviceName}/Exceptions/{$serviceName}Exception.php"));
+    }
+
+    #[Test]
+    public function it_generate_the_correct_namespace()
+    {
+        $serviceName = 'TestServiceNamespace';
+        Config::set('laravel-service-modules.directory', 'Test');
+        $directory = str(config('laravel-service-modules.directory', 'Services'))->ucfirst();
+
+        $this->artisan(GenerateServiceCommand::class)
+            ->expectsQuestion('Enter the service name', $serviceName)
+            ->expectsQuestion('Do you want to include exceptions in the service?', true)
+            ->assertExitCode(0);
+
+        $providerContent = File::get(app_path("{$directory}/{$serviceName}/Providers/{$serviceName}Provider.php"));
+        $interfaceContent = File::get(app_path("{$directory}/{$serviceName}/Repositories/{$serviceName}Interface.php"));
+        $repositoryContent = File::get(app_path("{$directory}/{$serviceName}/Repositories/{$serviceName}Repository.php"));
+        $facadeContent = File::get(app_path("{$directory}/{$serviceName}/Facades/{$serviceName}.php"));
+        $exceptionContent = File::get(app_path("{$directory}/{$serviceName}/Exceptions/{$serviceName}Exception.php"));
+
+        $this->assertStringContainsString("namespace App\\{$directory}\\{$serviceName}\\Providers;", $providerContent);
+        $this->assertStringContainsString("namespace App\\{$directory}\\{$serviceName}\\Repositories;", $interfaceContent);
+        $this->assertStringContainsString("namespace App\\{$directory}\\{$serviceName}\\Repositories;", $repositoryContent);
+        $this->assertStringContainsString("namespace App\\{$directory}\\{$serviceName}\\Facades;", $facadeContent);
+        $this->assertStringContainsString("namespace App\\{$directory}\\{$serviceName}\\Exceptions;", $exceptionContent);
     }
 }

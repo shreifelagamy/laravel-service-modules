@@ -19,7 +19,8 @@ class GenerateServiceCommand extends Command
 
     private Progress $progress;
 
-    private string|null $service_name;
+    private ?string $service_name;
+    private ?string $directory;
 
     /**
      * The name and signature of the console command.
@@ -48,6 +49,7 @@ class GenerateServiceCommand extends Command
     public function handle()
     {
         $this->service_name = $this->argument('name');
+        $this->directory = str(config('laravel-service-modules.directory', 'Services'))->ucfirst();
 
         if (empty($this->service_name)) {
             $this->service_name = text(
@@ -90,10 +92,10 @@ class GenerateServiceCommand extends Command
     public function getStubVariables(): array
     {
         return [
-            '$REPO_NAMESPACE$' => app()->getNamespace() . "Services\\{$this->service_name}\\Repositories",
-            '$PROVIDER_NAMESPACE$' => app()->getNamespace() . "Services\\{$this->service_name}\\Providers",
-            '$FACADE_NAMESPACE$' => app()->getNamespace() . "Services\\{$this->service_name}\\Facades",
-            '$EXCEPTION_NAMESPACE$' => app()->getNamespace() . "Services\\{$this->service_name}\\Exceptions",
+            '$REPO_NAMESPACE$' => app()->getNamespace() . "{$this->directory}\\{$this->service_name}\\Repositories",
+            '$PROVIDER_NAMESPACE$' => app()->getNamespace() . "{$this->directory}\\{$this->service_name}\\Providers",
+            '$FACADE_NAMESPACE$' => app()->getNamespace() . "{$this->directory}\\{$this->service_name}\\Facades",
+            '$EXCEPTION_NAMESPACE$' => app()->getNamespace() . "{$this->directory}\\{$this->service_name}\\Exceptions",
             '$SERVICE_NAME$' => $this->service_name,
         ];
     }
@@ -105,7 +107,7 @@ class GenerateServiceCommand extends Command
 
     private function getServicesPath(): string
     {
-        return app_path(Config::get('laravel-service-modules.directory', 'Services'));
+        return app_path($this->directory);
     }
 
     private function generateServiceFiles(bool $include_exceptions): void

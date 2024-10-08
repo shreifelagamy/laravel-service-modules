@@ -18,8 +18,11 @@ abstract class TestCase extends Orchestra
 
     protected function tearDown(): void
     {
+        $directory = str(config('laravel-service-modules.directory', 'Services'))->ucfirst();
+
         // Clean up generated files after each test
-        File::deleteDirectory(app_path('Services'));
+        File::deleteDirectory(app_path($directory));
+
         parent::tearDown();
     }
 }
