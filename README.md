@@ -1,5 +1,7 @@
 # Laravel Service Modules Generator
 
+![Laravel Service Modules](images/laravel-service-modules.png)
+
 A Laravel package to easily generate service modules for your Laravel applications.
 
 ## Installation
