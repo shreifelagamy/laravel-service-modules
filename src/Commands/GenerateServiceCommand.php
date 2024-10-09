@@ -21,6 +21,7 @@ class GenerateServiceCommand extends Command
 
     private ?string $service_name;
     private ?string $directory;
+    private ?array $methods;
 
     /**
      * The name and signature of the console command.
@@ -41,6 +42,7 @@ class GenerateServiceCommand extends Command
         parent::__construct();
 
         $this->filesystem = $filesystem;
+        $this->directory = str(config('laravel-service-modules.directory', 'Services'))->ucfirst();
     }
 
     /**
@@ -48,33 +50,16 @@ class GenerateServiceCommand extends Command
      */
     public function handle()
     {
-        $this->service_name = $this->argument('name');
-        $this->directory = str(config('laravel-service-modules.directory', 'Services'))->ucfirst();
-
-        if (empty($this->service_name)) {
-            $this->service_name = text(
-                label: 'Enter the service name',
-                placeholder: 'ExampleService',
-                required: true,
-                validate: fn(string $value) => match (true) {
-                    empty($value) => 'Service name is required',
-                    $this->filesystem->exists($this->getServicesPath() . '/' . $value) => 'Service already exists',
-                    default => null,
-                }
-            );
-        } else {
-            if ($this->filesystem->exists($this->getServicesPath() . '/' . $this->service_name)) {
-                $this->error("Service '{$this->service_name}' already exists.");
-                return;
-            }
+        if ($this->prepareTheServiceName() == false) {
+            return;
         }
 
-        $this->prepareTheServiceName();
-
         $include_exceptions = confirm(
-            label: 'Do you want to include exceptions in the service?',
+            label: 'Are you planning to have a separate exception for this service ?',
             default: true
         );
+
+        $this->determineServiceMethods();
 
         // calculating steps count
         $count = count($this->getStubFiles($include_exceptions)) + 1;
@@ -82,7 +67,29 @@ class GenerateServiceCommand extends Command
         $this->createSerivceDirectoryStructure($include_exceptions);
         $this->generateServiceFiles($include_exceptions);
 
-        note("Service Module `{$this->service_name}` generated successfully", 'warning');
+        note("Service Module `{$this->service_name}` generated successfully. Go build something great!", 'warning');
+    }
+
+    private function determineServiceMethods(): void
+    {
+        $methods = text(
+            label: "Do you have service methods in mind ?",
+            placeholder: "enter names comma separated, or leave empty",
+            required: false
+        );
+
+        if (!empty($methods)) {
+            $methods = explode(',', $methods);
+            $methods = array_map(fn(string $method) => str($method)->trim()->camel()->toString(), $methods);
+
+            $confirm = confirm("Are you sure you want to generate methods: " . implode(', ', $methods), default: true);
+
+            if ($confirm) {
+                $this->methods = $methods;
+            } else {
+                $this->determineServiceMethods();
+            }
+        }
     }
 
     /**
@@ -125,10 +132,31 @@ class GenerateServiceCommand extends Command
     private function generateServiceFile(SplFileInfo $file): void
     {
         $content = $file->getContents();
+        $isInterface = str_contains($file->getFilename(), 'interface');
+        $isRepository = str_contains($file->getFilename(), 'repository');
 
         // Replace content
         foreach ($this->getStubVariables() as $key => $value) {
             $content = str_replace($key, $value, $content);
+        }
+
+        if ($isInterface && !empty($this->methods)) {
+            $methodTemplates = '';
+
+            foreach ($this->methods as $method) {
+                $methodTemplates .= $this->methodDefinationTemplate($method);
+            }
+
+            $content = str_replace('// Add your methods here', $methodTemplates, $content);
+        }
+
+        if ($isRepository && !empty($this->methods)) {
+            $methodsContent = '';
+            foreach ($this->methods as $method) {
+                $methodsContent .= $this->methodTemplate($method);
+            }
+
+            $content = str_replace('// Add your methods here', $methodsContent, $content);
         }
 
         $file_path = $this->guessFilePath($file);
@@ -164,9 +192,30 @@ class GenerateServiceCommand extends Command
         return $files->toArray();
     }
 
-    private function prepareTheServiceName(): void
+    private function prepareTheServiceName(): bool
     {
+        $this->service_name = $this->argument('name');
+
+        if (empty($this->service_name)) {
+            $this->service_name = text(
+                label: 'Enter the service name',
+                placeholder: 'ExampleService',
+                required: true,
+                validate: fn(string $value) => match (true) {
+                    empty($value) => 'Service name is required',
+                    $this->filesystem->exists($this->getServicesPath() . '/' . $value) => 'Service already exists',
+                    default => null,
+                }
+            );
+        } else {
+            if ($this->filesystem->exists($this->getServicesPath() . '/' . $this->service_name)) {
+                $this->error("Service '{$this->service_name}' already exists.");
+                return false;
+            }
+        }
+
         $this->service_name = str($this->service_name)->trim()->studly();
+        return true;
     }
 
     private function createSerivceDirectoryStructure(bool $include_exceptions): void
@@ -181,5 +230,24 @@ class GenerateServiceCommand extends Command
         }
 
         $this->progress->advance();
+    }
+
+    private function methodTemplate(string $methodName): string
+    {
+        return "
+        public function {$methodName}(): void
+        {
+            //
+        }
+        \n
+        ";
+    }
+
+    private function methodDefinationTemplate(string $methodName): string
+    {
+        return "
+        public function {$methodName}(): void;
+        \n
+        ";
     }
 }

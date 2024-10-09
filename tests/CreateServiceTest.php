@@ -16,7 +16,8 @@ class CreateServiceTest extends TestCase
 
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
-            ->expectsQuestion('Do you want to include exceptions in the service?', true)
+            ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
         $this->assertFileExists(app_path("Services/{$serviceName}/Providers/{$serviceName}Provider.php"));
@@ -33,7 +34,8 @@ class CreateServiceTest extends TestCase
 
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
-            ->expectsQuestion('Do you want to include exceptions in the service?', true)
+            ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
         $providerContent = File::get(app_path("Services/{$serviceName}/Providers/{$serviceName}Provider.php"));
@@ -59,7 +61,8 @@ class CreateServiceTest extends TestCase
 
         $this->artisan(GenerateServiceCommand::class, ['name' => $serviceName])
             ->doesntExpectOutput('Enter the service name')
-            ->expectsQuestion('Do you want to include exceptions in the service?', true)
+            ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
         $this->assertFileExists(app_path("Services/{$serviceName}/Providers/{$serviceName}Provider.php"));
@@ -89,7 +92,8 @@ class CreateServiceTest extends TestCase
 
         // First, create the service
         $this->artisan(GenerateServiceCommand::class, ['name' => $serviceName])
-            ->expectsQuestion('Do you want to include exceptions in the service?', true)
+            ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
         // Try to create the same service again
@@ -105,7 +109,8 @@ class CreateServiceTest extends TestCase
 
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
-            ->expectsQuestion('Do you want to include exceptions in the service?', false)
+            ->expectsQuestion('Are you planning to have a separate exception for this service ?', false)
+            ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
         $this->assertFileExists(app_path("Services/{$serviceName}/Providers/{$serviceName}Provider.php"));
@@ -122,7 +127,8 @@ class CreateServiceTest extends TestCase
 
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
-            ->expectsQuestion('Do you want to include exceptions in the service?', true)
+            ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
         $this->assertFileExists(app_path("Services/{$serviceName}/Providers/{$serviceName}Provider.php"));
@@ -143,7 +149,8 @@ class CreateServiceTest extends TestCase
 
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
-            ->expectsQuestion('Do you want to include exceptions in the service?', true)
+            ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
         $this->assertFileExists(app_path("CustomServices/{$serviceName}/Providers/{$serviceName}Provider.php"));
@@ -162,7 +169,8 @@ class CreateServiceTest extends TestCase
 
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
-            ->expectsQuestion('Do you want to include exceptions in the service?', true)
+            ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
         $providerContent = File::get(app_path("{$directory}/{$serviceName}/Providers/{$serviceName}Provider.php"));
@@ -176,5 +184,28 @@ class CreateServiceTest extends TestCase
         $this->assertStringContainsString("namespace App\\{$directory}\\{$serviceName}\\Repositories;", $repositoryContent);
         $this->assertStringContainsString("namespace App\\{$directory}\\{$serviceName}\\Facades;", $facadeContent);
         $this->assertStringContainsString("namespace App\\{$directory}\\{$serviceName}\\Exceptions;", $exceptionContent);
+    }
+
+    #[Test]
+    public function it_generate_methods_and_add_them_to_repository_and_interface()
+    {
+        $serviceName = 'TestServiceMethods';
+
+        $this->artisan(GenerateServiceCommand::class)
+            ->expectsQuestion('Enter the service name', $serviceName)
+            ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you have service methods in mind ?', 'get, create, update, delete')
+            ->expectsQuestion('Are you sure you want to generate methods: get, create, update, delete', true)
+            ->assertExitCode(0);
+
+        $this->assertFileExists(app_path("Services/{$serviceName}/Repositories/{$serviceName}Interface.php"));
+        $this->assertFileExists(app_path("Services/{$serviceName}/Repositories/{$serviceName}Repository.php"));
+
+        $interfaceContent = File::get(app_path("Services/{$serviceName}/Repositories/{$serviceName}Interface.php"));
+        $repositoryContent = File::get(app_path("Services/{$serviceName}/Repositories/{$serviceName}Repository.php"));
+
+        $this->assertStringContainsString('public function get(): void;', $interfaceContent);
+        $this->assertStringContainsString('public function get(): void', $repositoryContent);
+
     }
 }
