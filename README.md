@@ -14,7 +14,7 @@ composer require shreifelagamy/laravel-services
 
 
 ```bash
-php artisan make:service UserService
+php artisan service:generate UserService
 ```
 
 This will create a new service class in the `app/Services` directory.
