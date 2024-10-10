@@ -9,17 +9,22 @@ A Laravel package to easily generate service modules for your Laravel applicatio
 You can install the package via composer:
 
 ```bash
-composer require shreifelagamy/laravel-services
+composer require shreifelagamy/laravel-service-modules
 ```
 
 ## Usage
-
 
 ```bash
 php artisan service:generate UserService
 ```
 
 This will create a new service class in the `app/Services` directory.
+
+During the generation process, you will be prompted to:
+1. Generate an exception for the service
+2. Add methods to the repository
+
+These prompts allow you to customize the service module according to your needs.
 
 The generated service structure will look like this:
 
@@ -41,14 +46,14 @@ app/Services/UserService/
 The package comes with a default configuration file that you can publish to customize the behavior:
 
 ```bash
-php artisan vendor:publish --tag=laravel-services-config
+php artisan vendor:publish --tag=laravel-service-modules-config
 ```
 
-This will create a `config/laravel-services.php` file where you can modify the default settings.
+This will create a `config/laravel-service-modules.php` file where you can modify the default settings.
 
 ## Customization
 
-You can customize the service class by creating a new class in the `app/Services` directory.
+You can control the directory name for generated services through the config file. This allows you to customize where your service modules are created within your Laravel application.
 
 ## License
 
