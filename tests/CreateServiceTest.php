@@ -17,6 +17,7 @@ class CreateServiceTest extends TestCase
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
             ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you want to include DTOs for this service?', '')
             ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
@@ -35,6 +36,7 @@ class CreateServiceTest extends TestCase
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
             ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you want to include DTOs for this service?', '')
             ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
@@ -62,6 +64,7 @@ class CreateServiceTest extends TestCase
         $this->artisan(GenerateServiceCommand::class, ['name' => $serviceName])
             ->doesntExpectOutput('Enter the service name')
             ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you want to include DTOs for this service?', '')
             ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
@@ -93,6 +96,7 @@ class CreateServiceTest extends TestCase
         // First, create the service
         $this->artisan(GenerateServiceCommand::class, ['name' => $serviceName])
             ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you want to include DTOs for this service?', '')
             ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
@@ -110,6 +114,7 @@ class CreateServiceTest extends TestCase
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
             ->expectsQuestion('Are you planning to have a separate exception for this service ?', false)
+            ->expectsQuestion('Do you want to include DTOs for this service?', '')
             ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
@@ -128,6 +133,7 @@ class CreateServiceTest extends TestCase
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
             ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you want to include DTOs for this service?', '')
             ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
@@ -150,6 +156,7 @@ class CreateServiceTest extends TestCase
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
             ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you want to include DTOs for this service?', '')
             ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
@@ -170,6 +177,7 @@ class CreateServiceTest extends TestCase
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
             ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you want to include DTOs for this service?', '')
             ->expectsQuestion('Do you have service methods in mind ?', '')
             ->assertExitCode(0);
 
@@ -194,6 +202,7 @@ class CreateServiceTest extends TestCase
         $this->artisan(GenerateServiceCommand::class)
             ->expectsQuestion('Enter the service name', $serviceName)
             ->expectsQuestion('Are you planning to have a separate exception for this service ?', true)
+            ->expectsQuestion('Do you want to include DTOs for this service?', '')
             ->expectsQuestion('Do you have service methods in mind ?', 'get, create, update, delete')
             ->expectsQuestion('Are you sure you want to generate methods: get, create, update, delete', true)
             ->assertExitCode(0);
@@ -207,5 +216,29 @@ class CreateServiceTest extends TestCase
         $this->assertStringContainsString('public function get(): void;', $interfaceContent);
         $this->assertStringContainsString('public function get(): void', $repositoryContent);
 
+    }
+
+    #[Test]
+    public function it_can_generate_dto_files()
+    {
+        $serviceName = 'TestServiceDTOs';
+        Config::set('laravel-service-modules.directory', 'Test');
+        $directory = str(config('laravel-service-modules.directory', 'Services'))->ucfirst();
+
+        $this->artisan(GenerateServiceCommand::class)
+            ->expectsQuestion('Enter the service name', $serviceName)
+            ->expectsQuestion('Are you planning to have a separate exception for this service ?', false)
+            ->expectsQuestion('Do you want to include DTOs for this service?', 'LaborerInfo')
+            ->expectsQuestion('Are you sure you want to generate DTOs: LaborerInfo', true)
+            ->expectsQuestion('Do you have service methods in mind ?', 'getUserInfo')
+            ->expectsQuestion('Are you sure you want to generate methods: getUserInfo', true)
+            ->assertExitCode(0);
+
+        $dtoPath = app_path("{$directory}/{$serviceName}/DTOs/LaborerInfo.php");
+        $this->assertFileExists($dtoPath);
+
+        $dtoContent = File::get($dtoPath);
+        $this->assertStringContainsString("namespace App\\{$directory}\\{$serviceName}\\DTOs;", $dtoContent);
+        $this->assertStringContainsString("class LaborerInfo", $dtoContent);
     }
 }

@@ -2,16 +2,15 @@
 
 namespace ShreifElagamy\LaravelServiceModules\Commands;
 
-use Laravel\Prompts\Progress;
 use Illuminate\Console\Command;
-use function Laravel\Prompts\note;
-use function Laravel\Prompts\text;
+use Illuminate\Filesystem\Filesystem;
+use Laravel\Prompts\Progress;
+use Symfony\Component\Finder\SplFileInfo;
 
 use function Laravel\Prompts\confirm;
-use Illuminate\Filesystem\Filesystem;
+use function Laravel\Prompts\note;
 use function Laravel\Prompts\progress;
-use Illuminate\Support\Facades\Config;
-use Symfony\Component\Finder\SplFileInfo;
+use function Laravel\Prompts\text;
 
 class GenerateServiceCommand extends Command
 {
@@ -20,8 +19,14 @@ class GenerateServiceCommand extends Command
     private Progress $progress;
 
     private ?string $service_name;
+
     private ?string $directory;
+
     private ?array $methods;
+
+    private bool $include_exceptions = true;
+
+    private ?array $dtos;
 
     /**
      * The name and signature of the console command.
@@ -54,35 +59,65 @@ class GenerateServiceCommand extends Command
             return;
         }
 
-        $include_exceptions = confirm(
+        $this->include_exceptions = confirm(
             label: 'Are you planning to have a separate exception for this service ?',
             default: true
         );
 
+        $this->determineDTOs();
         $this->determineServiceMethods();
 
         // calculating steps count
-        $count = count($this->getStubFiles($include_exceptions)) + 1;
+        $count = count($this->getStubFiles()) + 1;
+        if (! empty($this->dtos)) {
+            $count += count($this->dtos);
+        }
         $this->progress = progress(label: "Generating Service Module `{$this->service_name}`", steps: $count);
-        $this->createSerivceDirectoryStructure($include_exceptions);
-        $this->generateServiceFiles($include_exceptions);
+        $this->createSerivceDirectoryStructure();
+        $this->generateServiceFiles();
+
+        if (! empty($this->dtos)) {
+            $this->generateDTOs();
+        }
 
         note("Service Module `{$this->service_name}` generated successfully. Go build something great!", 'warning');
+    }
+
+    private function determineDTOs(): void
+    {
+        $dtos = text(
+            label: 'Do you want to include DTOs for this service?',
+            placeholder: 'Enter names comma separated, or leave empty',
+            required: false
+        );
+
+        if (! empty($dtos)) {
+            $dtos = explode(',', $dtos);
+            $dtos = array_map(fn(string $dto) => str($dto)->trim()->studly()->toString(), $dtos);
+
+            $confirm = confirm('Are you sure you want to generate DTOs: ' . implode(', ', $dtos), default: true);
+
+            if ($confirm) {
+                $this->dtos = $dtos;
+            } else {
+                $this->determineDTOs();
+            }
+        }
     }
 
     private function determineServiceMethods(): void
     {
         $methods = text(
-            label: "Do you have service methods in mind ?",
-            placeholder: "enter names comma separated, or leave empty",
+            label: 'Do you have service methods in mind ?',
+            placeholder: 'Enter names comma separated, or leave empty',
             required: false
         );
 
-        if (!empty($methods)) {
+        if (! empty($methods)) {
             $methods = explode(',', $methods);
             $methods = array_map(fn(string $method) => str($method)->trim()->camel()->toString(), $methods);
 
-            $confirm = confirm("Are you sure you want to generate methods: " . implode(', ', $methods), default: true);
+            $confirm = confirm('Are you sure you want to generate methods: ' . implode(', ', $methods), default: true);
 
             if ($confirm) {
                 $this->methods = $methods;
@@ -117,9 +152,9 @@ class GenerateServiceCommand extends Command
         return app_path($this->directory);
     }
 
-    private function generateServiceFiles(bool $include_exceptions): void
+    private function generateServiceFiles(): void
     {
-        $files = $this->getStubFiles($include_exceptions);
+        $files = $this->getStubFiles();
 
         foreach ($files as $file) {
             $this->generateServiceFile($file);
@@ -140,7 +175,7 @@ class GenerateServiceCommand extends Command
             $content = str_replace($key, $value, $content);
         }
 
-        if ($isInterface && !empty($this->methods)) {
+        if ($isInterface && ! empty($this->methods)) {
             $methodTemplates = '';
 
             foreach ($this->methods as $method) {
@@ -150,7 +185,7 @@ class GenerateServiceCommand extends Command
             $content = str_replace('// Add your methods here', $methodTemplates, $content);
         }
 
-        if ($isRepository && !empty($this->methods)) {
+        if ($isRepository && ! empty($this->methods)) {
             $methodsContent = '';
             foreach ($this->methods as $method) {
                 $methodsContent .= $this->methodTemplate($method);
@@ -181,13 +216,21 @@ class GenerateServiceCommand extends Command
     /**
      * @return \Symfony\Component\Finder\SplFileInfo[]
      */
-    private function getStubFiles(bool $include_exceptions): array
+    private function getStubFiles(): array
     {
         $files = collect($this->filesystem->files($this->getStubPath()));
 
-        if (!$include_exceptions) {
-            $files = $files->filter(fn(SplFileInfo $file) => !str_contains($file->getFilename(), 'exception'));
-        }
+        $files = $files->filter(function (SplFileInfo $file) {
+            // Exclude exception stubs if not needed
+            if (!$this->include_exceptions && str_contains($file->getFilename(), 'exception')) {
+                return false;
+            }
+            // Exclude DTO stubs
+            if (str_contains($file->getFilename(), 'dto')) {
+                return false;
+            }
+            return true;
+        });
 
         return $files->toArray();
     }
@@ -210,26 +253,46 @@ class GenerateServiceCommand extends Command
         } else {
             if ($this->filesystem->exists($this->getServicesPath() . '/' . $this->service_name)) {
                 $this->error("Service '{$this->service_name}' already exists.");
+
                 return false;
             }
         }
 
         $this->service_name = str($this->service_name)->trim()->studly();
+
         return true;
     }
 
-    private function createSerivceDirectoryStructure(bool $include_exceptions): void
+    private function createSerivceDirectoryStructure(): void
     {
         $this->progress->bgGreen('Creating Service Directory Structure');
         $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Repositories', 0755, true);
         $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Facades', 0755, true);
         $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Providers', 0755, true);
 
-        if ($include_exceptions) {
+        if ($this->include_exceptions) {
             $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/Exceptions', 0755, true);
         }
 
+        if (! empty($this->dtos)) {
+            $this->filesystem->makeDirectory($this->getServicesPath() . '/' . $this->service_name . '/DTOs', 0755, true);
+        }
+
         $this->progress->advance();
+    }
+
+    private function generateDTOs(): void
+    {
+        foreach ($this->dtos as $dto) {
+            $content = $this->filesystem->get($this->getStubPath() . '/dto.stub');
+            $content = str_replace('$DTO_NAMESPACE$', app()->getNamespace() . "{$this->directory}\\{$this->service_name}\\DTOs", $content);
+            $content = str_replace('$DTO_NAME$', $dto, $content);
+
+            $file_path = $this->getServicesPath() . "/{$this->service_name}/DTOs/{$dto}.php";
+            $this->filesystem->put($file_path, $content);
+
+            $this->progress->advance();
+        }
     }
 
     private function methodTemplate(string $methodName): string

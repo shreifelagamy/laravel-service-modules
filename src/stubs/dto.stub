@@ -1,0 +1,13 @@
+<?php
+
+namespace $DTO_NAMESPACE$;
+
+use Spatie\LaravelData\Data;
+
+class $DTO_NAME$ extends Data
+{
+    public function __construct(
+        // Add your DTO properties here
+    ) {
+    }
+}

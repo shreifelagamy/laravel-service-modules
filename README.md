@@ -23,6 +23,7 @@ This will create a new service class in the `app/Services` directory.
 During the generation process, you will be prompted to:
 1. Generate an exception for the service
 2. Add methods to the repository
+3. Include Data Transfer Objects (DTOs) for the service
 
 These prompts allow you to customize the service module according to your needs.
 
@@ -37,9 +38,17 @@ app/Services/UserService/
 │ └── UserServiceRepository.php
 ├── Facades/
 │ └── UserService.php
-└── Exceptions/ (optional)
-  └── UserServiceException.php
+├── Exceptions/ (optional)
+│ └── UserServiceException.php
+└── DTOs/ (optional)
+  └── UserData.php
 ```
+
+### Data Transfer Objects (DTOs)
+
+The package now supports the generation of Data Transfer Objects (DTOs) for your services. DTOs are simple objects that are used to transfer data between processes. They can help in organizing and structuring the data that your service handles.
+
+When prompted, you can specify the names of the DTOs you want to create for your service. The generator will create these DTOs in the `DTOs` folder within your service structure.
 
 ## Configuration
 
@@ -54,6 +63,15 @@ This will create a `config/laravel-service-modules.php` file where you can modif
 ## Customization
 
 You can control the directory name for generated services through the config file. This allows you to customize where your service modules are created within your Laravel application.
+
+## TODO
+
+We're constantly working to improve this package. Here are some features we're planning to add in the future:
+
+1. Support auto-creating PHPDoc for facades to include method definitions.
+2. Add more customization options for DTOs.
+
+Stay tuned for these upcoming enhancements!
 
 ## License
 
