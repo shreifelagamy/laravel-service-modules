@@ -1,8 +1,16 @@
-# Laravel Service Modules Generator
+# Service Modules Generator for Laravel
 
 ![Laravel Service Modules](images/laravel-service-modules.png)
 
 A Laravel package to easily generate service modules for your Laravel applications.
+
+## Understanding the Architecture
+
+To gain a deeper understanding of the architecture and how to effectively use service modules in Laravel, you can read this Medium article:
+
+[Simplify External API Integrations in Laravel Using Service Modules](https://medium.com/@theshreif/simplify-external-api-integrations-in-laravel-using-service-modules-56493a651a0e)
+
+This article provides insights into the benefits and implementation details of using service modules for external API integrations in Laravel applications.
 
 ## Installation
 
@@ -44,13 +52,7 @@ app/Services/UserService/
   └── UserData.php
 ```
 
-### Data Transfer Objects (DTOs)
-
-The package now supports the generation of Data Transfer Objects (DTOs) for your services. DTOs are simple objects that are used to transfer data between processes. They can help in organizing and structuring the data that your service handles.
-
-When prompted, you can specify the names of the DTOs you want to create for your service. The generator will create these DTOs in the `DTOs` folder within your service structure.
-
-## Configuration
+L## Configuration
 
 The package comes with a default configuration file that you can publish to customize the behavior:
 
