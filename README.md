@@ -52,7 +52,7 @@ app/Services/UserService/
   └── UserData.php
 ```
 
-L## Configuration
+## Configuration
 
 The package comes with a default configuration file that you can publish to customize the behavior:
 
