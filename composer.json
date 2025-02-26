@@ -3,7 +3,7 @@
     "description": "Generate modular service architecture for Laravel applications",
     "type": "library",
     "require": {
-        "laravel/framework": "^10.0|^11.0",
+        "laravel/framework": "^10.0|^11.0|^12.0",
         "spatie/laravel-data": "^4.10"
     },
     "require-dev": {
