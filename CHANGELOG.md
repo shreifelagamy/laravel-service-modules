@@ -32,11 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Auto register service providers
 
 ## [2.0.0] - 2025-02-27
-- Major update with new features and improvements
-- Improved service module generation process
-- Added support for DTOs
-- Enhanced configuration options
-- Updated documentation
+- Support for Laravel 12
 
 [Unreleased]: https://github.com/shreifelagamy/laravel-service-modules/compare/v2.0.0...HEAD
 [1.0.0]: https://github.com/shreifelagamy/laravel-service-modules/releases/tag/v1.0.0
