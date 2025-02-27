@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added method generation to the command
 - Auto register service providers
 
-[Unreleased]: https://github.com/shreifelagamy/laravel-service-modules/compare/v1.0.0...HEAD
+## [2.0.0] - 2025-02-27
+- Support for Laravel 12
+
+[Unreleased]: https://github.com/shreifelagamy/laravel-service-modules/compare/v2.0.0...HEAD
 [1.0.0]: https://github.com/shreifelagamy/laravel-service-modules/releases/tag/v1.0.0
 [1.1.0]: https://github.com/shreifelagamy/laravel-service-modules/releases/tag/v1.1.0
+[2.0.0]: https://github.com/shreifelagamy/laravel-service-modules/releases/tag/v2.0.0
